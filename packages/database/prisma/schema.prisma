@@ -1,0 +1,878 @@
+// Prisma Schema for Blind-like Anonymous Community Platform
+// Designed to ensure anonymity by separating email verification from user identity
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// EMAIL VERIFICATION (Separate from User for anonymity)
+// ============================================
+
+model EmailVerification {
+  id            String    @id @default(cuid())
+  emailHash     String    @unique @map("email_hash") // SHA-256 hash of email
+  emailSalt     String    @map("email_salt") // Salt for hashing
+  companyId     String?   @map("company_id") // Optional for general users
+  type          EmailVerificationType @default(COMPANY)
+  code          String    // 6-digit verification code
+  codeExpiresAt DateTime  @map("code_expires_at")
+  verified      Boolean   @default(false)
+  tempToken     String?   @unique @map("temp_token") // Token for completing registration
+  tokenExpiresAt DateTime? @map("token_expires_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  company Company? @relation(fields: [companyId], references: [id])
+
+  @@index([emailHash])
+  @@index([tempToken])
+  @@map("email_verifications")
+}
+
+enum EmailVerificationType {
+  COMPANY
+  GENERAL
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id              String    @id @default(cuid())
+  nickname        String    @unique // Anonymous nickname (e.g., swift_fox_8472)
+  passwordHash    String    @map("password_hash")
+  emailHash       String?   @unique @map("email_hash") // Hashed email for duplicate prevention
+  emailSalt       String?   @map("email_salt") // Salt used for email hashing
+  companyId       String?   @map("company_id") // Optional for general users
+  companyVerified Boolean   @default(false) @map("company_verified")
+  role            UserRole  @default(USER)
+  status          UserStatus @default(ACTIVE)
+  lastActiveAt    DateTime? @map("last_active_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  company             Company?            @relation(fields: [companyId], references: [id])
+  sessions            Session[]
+  communityMemberships CommunityMember[]
+  posts               Post[]
+  comments            Comment[]
+  votes               Vote[]
+  bookmarks           Bookmark[]
+  sentMessages        Message[]           @relation("SentMessages")
+  receivedMessages    Message[]           @relation("ReceivedMessages")
+  notifications       Notification[]
+  reports             Report[]            @relation("Reporter")
+  reportedItems       Report[]            @relation("ReportedUser")
+  companyReviews      CompanyReview[]
+  publicServantReviews PublicServantReview[]
+  auditLogs           AuditLog[]
+  communityRequests   CommunityRequest[]
+  reviewedRequests    CommunityRequest[]  @relation("RequestReviewer")
+
+  @@index([companyId])
+  @@index([nickname])
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  token        String   @unique
+  userAgent    String?  @map("user_agent")
+  ipAddress    String?  @map("ip_address")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  lastUsedAt   DateTime @default(now()) @map("last_used_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+model PasswordReset {
+  id            String    @id @default(cuid())
+  emailHash     String    @unique @map("email_hash") // Hashed email for lookup (unique per user)
+  emailSalt     String    @map("email_salt") // Salt for hashing
+  code          String    // 6-digit verification code
+  codeExpiresAt DateTime  @map("code_expires_at")
+  verified      Boolean   @default(false)
+  tempToken     String?   @unique @map("temp_token") // Token for completing password reset
+  tokenExpiresAt DateTime? @map("token_expires_at")
+  usedAt        DateTime? @map("used_at") // When the reset was completed
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([tempToken])
+  @@map("password_resets")
+}
+
+// ============================================
+// COMPANY
+// ============================================
+
+model Company {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  logoUrl      String?  @map("logo_url")
+  industry     String?
+  size         CompanySize?
+  description  String?
+  website      String?
+  isVerified   Boolean  @default(false) @map("is_verified")
+
+  // Display control (admin-managed)
+  displayOrder  Int      @default(0) @map("display_order")  // Lower = higher priority
+  isPinned      Boolean  @default(false) @map("is_pinned")  // Pinned to top
+  isSponsored   Boolean  @default(false) @map("is_sponsored") // Paid promotion
+  isActive      Boolean  @default(true) @map("is_active")   // Show/hide from list
+
+  // Aggregated ratings (cached)
+  avgRating       Float?   @default(0) @map("avg_rating")
+  totalReviews    Int      @default(0) @map("total_reviews")
+  avgSalary       Float?   @map("avg_salary")
+  avgWorkLife     Float?   @map("avg_work_life")
+  avgCulture      Float?   @map("avg_culture")
+  avgManagement   Float?   @map("avg_management")
+
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  domains           CompanyDomain[]
+  users             User[]
+  emailVerifications EmailVerification[]
+  reviews           CompanyReview[]
+  communities       Community[]
+  communityRequests CommunityRequest[]
+
+  @@index([slug])
+  @@index([name])
+  @@index([displayOrder])
+  @@index([isPinned])
+  @@map("companies")
+}
+
+enum CompanySize {
+  STARTUP      // 1-50
+  SMALL        // 51-200
+  MEDIUM       // 201-1000
+  LARGE        // 1001-5000
+  ENTERPRISE   // 5000+
+}
+
+model CompanyDomain {
+  id        String   @id @default(cuid())
+  companyId String   @map("company_id")
+  domain    String   @unique // e.g., "samsung.com"
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([domain])
+  @@map("company_domains")
+}
+
+model CompanyReview {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  userId      String   @map("user_id")
+
+  // Ratings (1-5)
+  overallRating   Int    @map("overall_rating")
+  salaryRating    Int?   @map("salary_rating")
+  workLifeRating  Int?   @map("work_life_rating")
+  cultureRating   Int?   @map("culture_rating")
+  managementRating Int?  @map("management_rating")
+
+  // Review content
+  title       String
+  pros        String
+  cons        String
+  advice      String?  // Advice to management
+
+  // Employment info
+  jobTitle    String?  @map("job_title")
+  department  String?
+  isCurrentEmployee Boolean @default(true) @map("is_current_employee")
+  yearsAtCompany    Int?    @map("years_at_company")
+
+  isAnonymous Boolean  @default(true) @map("is_anonymous")
+  status      ReviewStatus @default(PENDING)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([companyId, userId]) // One review per user per company
+  @@index([companyId])
+  @@map("company_reviews")
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ============================================
+// PUBLIC SERVANT CATEGORY
+// ============================================
+
+model PublicServantCategory {
+  id           String   @id @default(cuid())
+  name         String   // e.g., "Police", "Fire Department", "Teacher"
+  slug         String   @unique
+  iconUrl      String?  @map("icon_url")
+  description  String?
+  parentId     String?  @map("parent_id") // For subcategories
+
+  // Aggregated ratings (cached)
+  avgRating       Float?   @default(0) @map("avg_rating")
+  totalReviews    Int      @default(0) @map("total_reviews")
+  avgWorkLife     Float?   @map("avg_work_life")
+  avgSalary       Float?   @map("avg_salary")
+  avgStability    Float?   @map("avg_stability")
+  avgGrowth       Float?   @map("avg_growth")
+
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  parent      PublicServantCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    PublicServantCategory[] @relation("CategoryHierarchy")
+  reviews     PublicServantReview[]
+  communities Community[]
+  communityRequests CommunityRequest[]
+
+  @@index([slug])
+  @@index([parentId])
+  @@map("public_servant_categories")
+}
+
+model PublicServantReview {
+  id          String   @id @default(cuid())
+  categoryId  String   @map("category_id")
+  userId      String   @map("user_id")
+
+  // Ratings (1-5)
+  overallRating   Int    @map("overall_rating")
+  workLifeRating  Int?   @map("work_life_rating")
+  salaryRating    Int?   @map("salary_rating")
+  stabilityRating Int?   @map("stability_rating")
+  growthRating    Int?   @map("growth_rating")
+
+  // Review content
+  title       String
+  pros        String
+  cons        String
+  advice      String?
+
+  // Employment info
+  position    String?  // e.g., "7급 공무원", "소방관"
+  yearsWorked Int?     @map("years_worked")
+  isCurrentEmployee Boolean @default(true) @map("is_current_employee")
+
+  isAnonymous Boolean  @default(true) @map("is_anonymous")
+  status      ReviewStatus @default(PENDING)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  category PublicServantCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user     User                  @relation(fields: [userId], references: [id])
+
+  @@unique([categoryId, userId]) // One review per user per category
+  @@index([categoryId])
+  @@map("public_servant_reviews")
+}
+
+// ============================================
+// INTEREST CATEGORY (Topic-based communities)
+// ============================================
+
+model InterestCategory {
+  id           String   @id @default(cuid())
+  name         String   // e.g., "Gaming", "Tech Talk", "Investment"
+  slug         String   @unique
+  iconUrl      String?  @map("icon_url")
+  description  String?
+  color        String?  // Hex color for UI theming
+  parentId     String?  @map("parent_id") // For subcategories (Gaming → Battlegrounds)
+
+  // Display control
+  displayOrder Int      @default(0) @map("display_order")
+  isActive     Boolean  @default(true) @map("is_active")
+
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  parent      InterestCategory?  @relation("InterestHierarchy", fields: [parentId], references: [id])
+  children    InterestCategory[] @relation("InterestHierarchy")
+  communities Community[]
+  communityRequests CommunityRequest[]
+
+  @@index([slug])
+  @@index([parentId])
+  @@index([displayOrder])
+  @@map("interest_categories")
+}
+
+// ============================================
+// COMMUNITY
+// ============================================
+
+model Community {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  description String?
+  type        CommunityType
+  companyId   String?       @map("company_id") // Only for COMPANY type
+  publicServantCategoryId String? @map("public_servant_category_id") // Only for PUBLIC_SERVANT type
+  interestCategoryId String? @map("interest_category_id") // Only for INTEREST type
+  iconUrl     String?       @map("icon_url")
+  bannerUrl   String?       @map("banner_url")
+  isPrivate   Boolean       @default(false) @map("is_private")
+  memberCount Int           @default(0) @map("member_count")
+  postCount   Int           @default(0) @map("post_count")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  company               Company?                @relation(fields: [companyId], references: [id])
+  publicServantCategory PublicServantCategory?  @relation(fields: [publicServantCategoryId], references: [id])
+  interestCategory      InterestCategory?       @relation(fields: [interestCategoryId], references: [id])
+  members               CommunityMember[]
+  posts                 Post[]
+  createdFromRequests   CommunityRequest[]
+
+  @@index([slug])
+  @@index([type])
+  @@index([companyId])
+  @@index([publicServantCategoryId])
+  @@index([interestCategoryId])
+  @@map("communities")
+}
+
+enum CommunityType {
+  COMPANY        // Company-specific (requires verification)
+  INDUSTRY       // Industry-wide (IT, Finance, etc.)
+  JOB            // Job-specific (Developers, Designers, etc.)
+  GENERAL        // General topics (Career, Life, etc.)
+  REGIONAL       // Regional (Seoul, Busan, etc.)
+  PUBLIC_SERVANT // Public servant category (Police, Fire, etc.)
+  INTEREST       // Interest/Topic-based (Tech, Investment, etc.)
+}
+
+model CommunityMember {
+  id          String   @id @default(cuid())
+  communityId String   @map("community_id")
+  userId      String   @map("user_id")
+  role        MemberRole @default(MEMBER)
+  joinedAt    DateTime @default(now()) @map("joined_at")
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, userId])
+  @@index([userId])
+  @@map("community_members")
+}
+
+enum MemberRole {
+  MEMBER
+  MODERATOR
+  ADMIN
+}
+
+// ============================================
+// COMMUNITY REQUEST (User requests to add community)
+// ============================================
+
+model CommunityRequest {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+
+  // Request details
+  name        String   // Requested community name
+  description String?  // Why this community is needed
+  targetType  CommunityRequestTargetType @map("target_type")
+
+  // Target organization (optional, based on targetType)
+  companyId               String? @map("company_id")
+  publicServantCategoryId String? @map("public_servant_category_id")
+  interestCategoryId      String? @map("interest_category_id")
+
+  // Status
+  status      CommunityRequestStatus @default(PENDING)
+  adminNote   String?  @map("admin_note") // Admin's reason for approval/rejection
+  reviewedBy  String?  @map("reviewed_by") // Admin who reviewed
+  reviewedAt  DateTime? @map("reviewed_at")
+
+  // Result (if approved)
+  createdCommunityId String? @map("created_community_id")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user                  User                    @relation(fields: [userId], references: [id])
+  company               Company?                @relation(fields: [companyId], references: [id])
+  publicServantCategory PublicServantCategory?  @relation(fields: [publicServantCategoryId], references: [id])
+  interestCategory      InterestCategory?       @relation(fields: [interestCategoryId], references: [id])
+  createdCommunity      Community?              @relation(fields: [createdCommunityId], references: [id])
+  reviewer              User?                   @relation("RequestReviewer", fields: [reviewedBy], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([targetType])
+  @@map("community_requests")
+}
+
+enum CommunityRequestTargetType {
+  COMPANY        // Request community under a company
+  PUBLIC_SERVANT // Request community under a public servant category
+  INTEREST       // Request new interest-based community
+  GENERAL        // Request general community
+}
+
+enum CommunityRequestStatus {
+  PENDING   // Waiting for admin review
+  APPROVED  // Approved and community created
+  REJECTED  // Rejected by admin
+  CANCELLED // Cancelled by user
+}
+
+// ============================================
+// POST & CONTENT
+// ============================================
+
+model Post {
+  id          String     @id @default(cuid())
+  communityId String     @map("community_id")
+  authorId    String     @map("author_id")
+
+  title       String
+  content     String
+  contentHtml String?    @map("content_html") // Rendered HTML
+
+  isAnonymous Boolean    @default(true) @map("is_anonymous")
+  isPinned    Boolean    @default(false) @map("is_pinned")
+  isLocked    Boolean    @default(false) @map("is_locked") // No more comments
+  status      PostStatus @default(ACTIVE)
+
+  // Cached counts
+  viewCount    Int       @default(0) @map("view_count")
+  voteCount    Int       @default(0) @map("vote_count") // upvotes - downvotes
+  commentCount Int       @default(0) @map("comment_count")
+
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  community  Community    @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  author     User         @relation(fields: [authorId], references: [id])
+  media      PostMedia[]
+  tags       PostTag[]
+  comments   Comment[]
+  votes      Vote[]
+  bookmarks  Bookmark[]
+  reports    Report[]
+
+  @@index([communityId])
+  @@index([authorId])
+  @@index([createdAt])
+  @@index([voteCount])
+  @@map("posts")
+}
+
+enum PostStatus {
+  ACTIVE
+  HIDDEN      // Hidden by moderator
+  DELETED     // Deleted by author
+}
+
+model PostMedia {
+  id        String    @id @default(cuid())
+  postId    String    @map("post_id")
+  type      MediaType
+  url       String
+  caption   String?
+  order     Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("post_media")
+}
+
+enum MediaType {
+  IMAGE
+  LINK
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  postCount Int       @default(0) @map("post_count")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  posts PostTag[]
+
+  @@index([slug])
+  @@map("tags")
+}
+
+model PostTag {
+  id      String @id @default(cuid())
+  postId  String @map("post_id")
+  tagId   String @map("tag_id")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, tagId])
+  @@map("post_tags")
+}
+
+// ============================================
+// COMMENT
+// ============================================
+
+model Comment {
+  id          String   @id @default(cuid())
+  postId      String   @map("post_id")
+  authorId    String   @map("author_id")
+  parentId    String?  @map("parent_id") // For nested comments
+
+  content     String
+  contentHtml String?  @map("content_html")
+
+  isAnonymous Boolean  @default(true) @map("is_anonymous")
+  isAuthor    Boolean  @default(false) @map("is_author") // Is post author
+  status      CommentStatus @default(ACTIVE)
+
+  // Cached counts
+  voteCount   Int      @default(0) @map("vote_count")
+  replyCount  Int      @default(0) @map("reply_count")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author   User      @relation(fields: [authorId], references: [id])
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  Comment[] @relation("CommentReplies")
+  votes    Vote[]
+  reports  Report[]
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+enum CommentStatus {
+  ACTIVE
+  HIDDEN
+  DELETED
+}
+
+// ============================================
+// VOTE & BOOKMARK
+// ============================================
+
+model Vote {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  postId    String?  @map("post_id")
+  commentId String?  @map("comment_id")
+  value     Int      // 1 for upvote, -1 for downvote
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
+  @@index([postId])
+  @@index([commentId])
+  @@map("votes")
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  postId    String   @map("post_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([userId])
+  @@map("bookmarks")
+}
+
+// ============================================
+// MESSAGING
+// ============================================
+
+model Message {
+  id          String   @id @default(cuid())
+  senderId    String   @map("sender_id")
+  receiverId  String   @map("receiver_id")
+
+  content     String
+  isRead      Boolean  @default(false) @map("is_read")
+  readAt      DateTime? @map("read_at")
+
+  // For anonymous messaging context
+  contextPostId String? @map("context_post_id") // Which post initiated this conversation
+
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  sender   User @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([senderId, receiverId])
+  @@map("messages")
+}
+
+// ============================================
+// NOTIFICATION
+// ============================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?            // Additional data (postId, commentId, etc.)
+  isRead    Boolean          @default(false) @map("is_read")
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  COMMENT         // New comment on your post
+  REPLY           // Reply to your comment
+  VOTE            // Your post/comment was upvoted
+  MENTION         // You were mentioned
+  MESSAGE         // New message
+  SYSTEM          // System notification
+}
+
+// ============================================
+// REPORT & MODERATION
+// ============================================
+
+model Report {
+  id          String       @id @default(cuid())
+  reporterId  String       @map("reporter_id")
+  reportedUserId String?   @map("reported_user_id")
+  postId      String?      @map("post_id")
+  commentId   String?      @map("comment_id")
+
+  reason      ReportReason
+  description String?
+  status      ReportStatus @default(PENDING)
+
+  // Resolution
+  resolvedBy  String?      @map("resolved_by")
+  resolvedAt  DateTime?    @map("resolved_at")
+  resolution  String?      // Admin notes
+
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  reporter    User     @relation("Reporter", fields: [reporterId], references: [id])
+  reportedUser User?   @relation("ReportedUser", fields: [reportedUserId], references: [id])
+  post        Post?    @relation(fields: [postId], references: [id], onDelete: SetNull)
+  comment     Comment? @relation(fields: [commentId], references: [id], onDelete: SetNull)
+
+  @@index([reporterId])
+  @@index([status])
+  @@map("reports")
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  HATE_SPEECH
+  MISINFORMATION
+  PRIVACY_VIOLATION
+  INAPPROPRIATE_CONTENT
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
+  DISMISSED
+}
+
+// ============================================
+// AUDIT LOG (Admin actions)
+// ============================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String   @map("admin_id")
+  action    String   // e.g., "DELETE_POST", "BAN_USER", "RESOLVE_REPORT"
+  targetType String  @map("target_type") // e.g., "User", "Post", "Comment"
+  targetId  String   @map("target_id")
+  details   Json?    // Additional context
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  admin User @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================
+// ADVERTISEMENT (Banner Ads)
+// ============================================
+
+model Advertisement {
+  id          String    @id @default(cuid())
+  title       String    // Internal name for admin reference
+  imageUrl    String    @map("image_url") // Banner image URL
+  linkUrl     String?   @map("link_url") // Click destination URL
+  placement   AdPlacement // Where to show the ad
+
+  // Display settings
+  isActive    Boolean   @default(true) @map("is_active")
+  priority    Int       @default(0) // Higher = shown first
+
+  // Schedule (optional)
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+
+  // Stats
+  impressions Int       @default(0)
+  clicks      Int       @default(0)
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([placement])
+  @@index([isActive])
+  @@index([priority])
+  @@map("advertisements")
+}
+
+enum AdPlacement {
+  COMPANY     // Company Hall / 회사 페이지
+  PUBLIC_SERVANT // 공무원 페이지
+  INTEREST    // 관심사 페이지
+  HOME        // 홈 피드
+  ALL         // 모든 위치
+}
+
+// ============================================
+// SITE SETTINGS (Key-Value Store)
+// ============================================
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  type      SettingType @default(STRING)
+  category  String   @default("general")
+  label     String?  // Human-readable label
+  description String? // Help text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@map("site_settings")
+}
+
+enum SettingType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+}
+
+// ============================================
+// AD INQUIRY (광고 문의)
+// ============================================
+
+model AdInquiry {
+  id          String   @id @default(cuid())
+
+  // Contact information
+  companyName String   @map("company_name")
+  contactName String   @map("contact_name")
+  email       String
+  phone       String?
+
+  // Inquiry details
+  adType      AdInquiryType @map("ad_type")
+  budget      String?       // Budget range
+  duration    String?       // Desired ad duration
+  message     String        @db.Text
+
+  // Status
+  status      AdInquiryStatus @default(PENDING)
+  adminNote   String?       @map("admin_note") @db.Text
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("ad_inquiries")
+}
+
+enum AdInquiryType {
+  BANNER      // 배너 광고
+  SPONSORED   // 스폰서 게시글
+  NEWSLETTER  // 뉴스레터 광고
+  PARTNERSHIP // 파트너십
+  OTHER       // 기타
+}
+
+enum AdInquiryStatus {
+  PENDING     // 대기 중
+  IN_PROGRESS // 처리 중
+  COMPLETED   // 완료
+  REJECTED    // 거절
+}
