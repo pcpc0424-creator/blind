@@ -1,233 +1,236 @@
-# Blind Platform - 직장인 익명 커뮤니티
+# Bulag - Anonymous Workplace Community Platform
 
-블라인드와 유사한 직장인 익명 커뮤니티 플랫폼입니다.
+An anonymous workplace community platform similar to Blind, where professionals can share insights and connect with colleagues.
 
-## 기술 스택
+## Tech Stack
 
 ### Frontend
 - **Next.js 14** (App Router)
 - **Tailwind CSS** + **shadcn/ui**
-- **TanStack Query** (서버 상태 관리)
-- **Zustand** (전역 상태 관리)
-- **React Hook Form** + **Zod** (폼 처리 및 유효성 검사)
+- **TanStack Query** (Server state management)
+- **Zustand** (Global state management)
+- **React Hook Form** + **Zod** (Form handling & validation)
 
 ### Backend
 - **Node.js 20 LTS**
 - **Express.js** + **TypeScript**
 - **Prisma ORM**
 - **PostgreSQL 16**
-- **Redis 7**
 
 ### Infrastructure
-- **Turborepo** (모노레포)
-- **Docker Compose** (로컬 개발 환경)
+- **Turborepo** (Monorepo)
+- **PM2** (Process manager)
+- **Nginx** (Reverse proxy)
 
-## 프로젝트 구조
+## Project Structure
 
 ```
-blind-platform/
+blind/
 ├── apps/
-│   ├── web/                    # Next.js 프론트엔드
-│   └── api/                    # Express.js 백엔드
+│   ├── web/                    # Next.js frontend (port 3001)
+│   └── api/                    # Express.js backend (port 4007)
 ├── packages/
-│   ├── database/               # Prisma 클라이언트 & 스키마
-│   └── shared/                 # 공유 유틸리티, 타입, Zod 스키마
+│   ├── database/               # Prisma client & schema
+│   └── shared/                 # Shared utilities, types, Zod schemas
 ├── docker/
 │   └── docker-compose.yml      # PostgreSQL, Redis
-└── turbo.json                  # Turborepo 설정
+└── turbo.json                  # Turborepo config
 ```
 
-## 시작하기
+## Getting Started
 
-### 필수 조건
-- Node.js 20 이상
-- npm 또는 pnpm
-- Docker & Docker Compose
-- Nginx (프로덕션 배포용)
+### Prerequisites
+- Node.js 20+
+- npm or pnpm
+- PostgreSQL 16
+- Nginx (for production)
 
-### 1. 의존성 설치
+### 1. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 2. 환경 변수 설정
+### 2. Environment Variables
 
-`.env` 파일이 루트에 이미 생성되어 있습니다. 필요에 따라 수정하세요.
-
-### 3. Docker 서비스 시작 (PostgreSQL, Redis)
+Copy `.env.example` to `.env` and configure:
 
 ```bash
-cd docker
-docker-compose up -d
+cp .env.example .env
 ```
 
-### 4. 데이터베이스 초기화
+### 3. Database Setup
 
 ```bash
-# Prisma 클라이언트 생성
+# Generate Prisma client
 npm run db:generate
 
-# 데이터베이스 스키마 적용
+# Push schema to database
 npm run db:push
 
-# 시드 데이터 삽입
+# Seed initial data
 npm run db:seed
 ```
 
-### 5. 개발 서버 실행
+### 4. Development Server
 
 ```bash
 npm run dev
 ```
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:4000
+- Frontend: http://localhost:3001/blind
+- Backend API: http://localhost:4007/api/v1
 
-## 프로덕션 배포 (http://115.68.223.124/blind)
+## Production Deployment
 
-### 1. 빌드
+### 1. Build
 
 ```bash
 npm run build
 ```
 
-### 2. Nginx 설정
+### 2. Start with PM2
 
 ```bash
-# Nginx 설정 파일 복사
-sudo cp nginx.conf /etc/nginx/sites-available/blind
-sudo ln -sf /etc/nginx/sites-available/blind /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
+pm2 start ecosystem.config.js
 ```
 
-### 3. PM2로 서버 실행
+### 3. Access
 
-```bash
-# PM2 설치 (처음 한 번만)
-npm install -g pm2
+- URL: https://bulagph.com/blind
 
-# 서버 시작
-npm run start:pm2
+## Features
 
-# 상태 확인
-pm2 status
+### Authentication (3-Step Email Verification)
+1. Submit company email → Domain matching
+2. Verify email code
+3. Set password → Auto-generated anonymous nickname
 
-# 로그 확인
-pm2 logs
+### Communities
+- **Company Communities** - Verified employees only (auto-join)
+- **General Communities** - Open to all users
+- **Public Servant Communities** - For government employees
+- **Interest Communities** - Topic-based communities
 
-# 서버 중지
-npm run stop:pm2
-```
+### Posts & Comments
+- Anonymous/non-anonymous posting
+- Image attachments
+- Tag system
+- Upvote/downvote
+- Nested comments
 
-### 4. 접속
+### Reviews
+- Company reviews with ratings
+- Public servant category reviews
+- Rating breakdown (Work-Life, Salary, Stability, Growth)
 
-- URL: http://115.68.223.124/blind
+### Admin Panel
+- User management (suspend, activate, role change)
+- Post management (pin, hide, delete)
+- Comment management
+- Community management
+- Company management
+- Review management (approve, reject)
+- Report handling
+- Notification broadcasting
+- Site settings
 
-## 주요 기능
-
-### 인증 (3단계 이메일 인증)
-1. 회사 이메일 제출 → 도메인으로 회사 매칭
-2. 이메일 인증코드 확인
-3. 비밀번호 설정 → 익명 닉네임 자동 생성
-
-### 커뮤니티
-- 회사 커뮤니티 (인증된 직원만)
-- 일반 커뮤니티 (직군별, 업종별, 지역별)
-
-### 게시글 & 댓글
-- 익명/비익명 선택
-- 이미지 첨부
-- 태그 시스템
-- 좋아요/싫어요 투표
-- 대댓글 지원
-
-### 검색
-- 게시글, 회사, 커뮤니티 통합 검색
-- 태그 기반 검색
-
-## API 엔드포인트
+## API Endpoints
 
 ```
 /api/v1
 
-# 인증
-POST /auth/register          # 이메일 → 인증코드 발송
-POST /auth/verify-email      # 인증코드 확인
-POST /auth/complete          # 가입 완료
-POST /auth/login             # 로그인
-POST /auth/logout            # 로그아웃
-GET  /auth/me                # 현재 사용자
+# Authentication
+POST /auth/register          # Email → Send verification code
+POST /auth/verify-email      # Verify code
+POST /auth/complete          # Complete registration
+POST /auth/login             # Login
+POST /auth/logout            # Logout
+GET  /auth/me                # Current user
 
-# 커뮤니티
-GET  /communities            # 커뮤니티 목록
-GET  /communities/me         # 내 커뮤니티
-GET  /communities/:slug      # 커뮤니티 상세
-POST /communities/:slug/join # 가입
-POST /communities/:slug/leave # 탈퇴
+# Communities
+GET  /communities            # List communities
+GET  /communities/me         # My communities
+GET  /communities/:slug      # Community details
+POST /communities/:id/join   # Join
+POST /communities/:id/leave  # Leave
 
-# 게시글
-GET  /posts                  # 피드
-GET  /posts/trending         # 인기글
-GET  /posts/:id              # 상세
-POST /posts                  # 작성
-PATCH /posts/:id             # 수정
-DELETE /posts/:id            # 삭제
-POST /posts/:id/vote         # 투표
-POST /posts/:id/bookmark     # 북마크
+# Posts
+GET  /posts                  # Feed
+GET  /posts/trending         # Trending posts
+GET  /posts/:id              # Post details
+POST /posts                  # Create post
+PATCH /posts/:id             # Update post
+DELETE /posts/:id            # Delete post
+POST /posts/:id/vote         # Vote
+POST /posts/:id/bookmark     # Bookmark
 
-# 댓글
-GET  /posts/:id/comments     # 댓글 목록
-POST /posts/:id/comments     # 댓글 작성
-PATCH /comments/:id          # 수정
-DELETE /comments/:id         # 삭제
-POST /comments/:id/vote      # 투표
+# Comments
+GET  /posts/:id/comments     # List comments
+POST /posts/:id/comments     # Create comment
+PATCH /comments/:id          # Update comment
+DELETE /comments/:id         # Delete comment
+POST /comments/:id/vote      # Vote
 
-# 회사
-GET  /companies              # 회사 목록
-GET  /companies/search       # 검색
-GET  /companies/:slug        # 상세
+# Reviews
+GET  /reviews/company/:id           # Company reviews
+POST /reviews/company/:id           # Create company review
+GET  /reviews/public-servant/:id    # Public servant reviews
+POST /reviews/public-servant/:id    # Create public servant review
+
+# Companies
+GET  /companies              # List companies
+GET  /companies/search       # Search companies
+GET  /companies/:slug        # Company details
+
+# Admin
+GET  /reviews/admin/:type    # Admin review list
+PATCH /reviews/:id/approve   # Approve review
+PATCH /reviews/:id/reject    # Reject review
+DELETE /reviews/:id          # Delete review
 ```
 
-## 데이터베이스 스키마
+## Database
 
-### 핵심 테이블
-- `users` - 사용자 (익명 닉네임, 회사 연결)
-- `email_verifications` - 이메일 인증 (해시로 익명성 보장)
-- `companies` - 회사 정보
-- `company_domains` - 회사 이메일 도메인
-- `communities` - 커뮤니티
-- `posts` - 게시글
-- `comments` - 댓글
-- `votes` - 투표
+### Core Tables
+- `users` - Users (anonymous nickname, company link)
+- `email_verifications` - Email verification (hashed for anonymity)
+- `companies` - Company information
+- `company_domains` - Company email domains
+- `communities` - Communities
+- `posts` - Posts
+- `comments` - Comments
+- `votes` - Votes
+- `company_reviews` - Company reviews
+- `public_servant_reviews` - Public servant reviews
 
-## 브랜드 컬러
-
-- Primary: `#8b5cf6` (Purple)
-
-## 개발 명령어
+## Development Commands
 
 ```bash
-# 개발 서버 실행
+# Development server
 npm run dev
 
-# 빌드
+# Build
 npm run build
 
-# 린트
+# Lint
 npm run lint
 
-# 코드 포맷팅
+# Format code
 npm run format
 
-# 데이터베이스
-npm run db:generate    # Prisma 클라이언트 생성
-npm run db:push        # 스키마 푸시
-npm run db:migrate     # 마이그레이션 실행
-npm run db:seed        # 시드 데이터 삽입
+# Database
+npm run db:generate    # Generate Prisma client
+npm run db:push        # Push schema
+npm run db:migrate     # Run migrations
+npm run db:seed        # Seed data
+
+# PM2
+pm2 restart blind-api blind-web    # Restart services
+pm2 logs blind-api                 # View API logs
+pm2 logs blind-web                 # View web logs
 ```
 
-## 라이선스
+## License
 
 MIT
