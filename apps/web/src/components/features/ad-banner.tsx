@@ -34,13 +34,13 @@ export function AdBanner({
 
   // Track impression when component mounts
   useEffect(() => {
-    api.post(`/ads/${ad.id}/impression`).catch(() => {});
+    api.post(`/banners/${ad.id}/impression`).catch(() => {});
   }, [ad.id]);
 
   const handleClick = async () => {
     // Track click
     try {
-      await api.post(`/ads/${ad.id}/click`);
+      await api.post(`/banners/${ad.id}/click`);
     } catch (error) {
       // Ignore errors
     }
@@ -173,7 +173,7 @@ export function useAds(placement: string) {
   return useQuery({
     queryKey: ['ads', placement],
     queryFn: async () => {
-      const response = await api.get<AdData[]>(`/ads?placement=${placement}`);
+      const response = await api.get<AdData[]>(`/banners?placement=${placement}`);
       return response.data || [];
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes

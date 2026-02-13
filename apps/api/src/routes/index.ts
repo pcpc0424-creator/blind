@@ -35,7 +35,7 @@ router.use('/companies', companyRoutes);
 router.use('/public-servants', publicServantRoutes);
 router.use('/interests', interestRoutes);
 router.use('/reports', reportRoutes);
-router.use('/ads', adRoutes);
+router.use('/banners', adRoutes);
 router.use('/ad-inquiries', adInquiryRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/tags', tagRoutes);
@@ -61,7 +61,7 @@ router.get('/', (req, res) => {
         publicServants: '/api/v1/public-servants',
         interests: '/api/v1/interests',
         reports: '/api/v1/reports',
-        ads: '/api/v1/ads',
+        banners: '/api/v1/banners',
         adInquiries: '/api/v1/ad-inquiries',
         notifications: '/api/v1/notifications',
         tags: '/api/v1/tags',

@@ -107,7 +107,7 @@ export default function AdsManagementPage() {
   const { data: adsData, isLoading } = useQuery({
     queryKey: ['admin-ads'],
     queryFn: async () => {
-      const response = await api.get<Advertisement[]>('/ads/admin/list');
+      const response = await api.get<Advertisement[]>('/banners/admin/list');
       return { data: response.data, pagination: (response as any).pagination };
     },
   });
@@ -116,9 +116,9 @@ export default function AdsManagementPage() {
   const saveMutation = useMutation({
     mutationFn: async (data: AdFormData & { id?: string }) => {
       if (data.id) {
-        return api.patch(`/ads/admin/${data.id}`, data);
+        return api.patch(`/banners/admin/${data.id}`, data);
       }
-      return api.post('/ads/admin', data);
+      return api.post('/banners/admin', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-ads'] });
@@ -142,7 +142,7 @@ export default function AdsManagementPage() {
   // Toggle active mutation
   const toggleMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      return api.patch(`/ads/admin/${id}`, { isActive });
+      return api.patch(`/banners/admin/${id}`, { isActive });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-ads'] });
@@ -152,7 +152,7 @@ export default function AdsManagementPage() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return api.delete(`/ads/admin/${id}`);
+      return api.delete(`/banners/admin/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-ads'] });
