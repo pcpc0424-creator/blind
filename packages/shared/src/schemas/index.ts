@@ -5,3 +5,4 @@ export * from './community.schema';
 export * from './company.schema';
 export * from './message.schema';
 export * from './report.schema';
+export * from './inquiry.schema';

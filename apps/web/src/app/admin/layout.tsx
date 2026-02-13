@@ -23,6 +23,7 @@ import {
   Menu,
   X,
   Star,
+  HelpCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -106,6 +107,11 @@ const adminMenus = [
     title: 'Ad Inquiries',
     href: '/admin/ad-inquiries',
     icon: Megaphone,
+  },
+  {
+    title: 'User Inquiries',
+    href: '/admin/inquiries',
+    icon: HelpCircle,
   },
   {
     title: 'Settings',

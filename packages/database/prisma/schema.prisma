@@ -75,6 +75,8 @@ model User {
   auditLogs           AuditLog[]
   communityRequests   CommunityRequest[]
   reviewedRequests    CommunityRequest[]  @relation("RequestReviewer")
+  inquiries           Inquiry[]
+  answeredInquiries   Inquiry[]           @relation("InquiryAdmin")
 
   @@index([companyId])
   @@index([nickname])
@@ -875,4 +877,54 @@ enum AdInquiryStatus {
   IN_PROGRESS // 처리 중
   COMPLETED   // 완료
   REJECTED    // 거절
+}
+
+// ============================================
+// INQUIRY (User inquiries to admin)
+// ============================================
+
+model Inquiry {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+
+  // Inquiry details
+  category    InquiryCategory
+  subject     String
+  content     String   @db.Text
+
+  // Status
+  status      InquiryStatus @default(PENDING)
+
+  // Admin response
+  adminReply  String?  @map("admin_reply") @db.Text
+  repliedBy   String?  @map("replied_by")
+  repliedAt   DateTime? @map("replied_at")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User     @relation(fields: [userId], references: [id])
+  admin       User?    @relation("InquiryAdmin", fields: [repliedBy], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
+  @@map("inquiries")
+}
+
+enum InquiryCategory {
+  BUG_REPORT      // Bug report
+  FEATURE_REQUEST // Feature request
+  ACCOUNT_ISSUE   // Account issue
+  REPORT_ISSUE    // Report/moderation issue
+  GENERAL         // General inquiry
+  OTHER           // Other
+}
+
+enum InquiryStatus {
+  PENDING     // Waiting for admin response
+  IN_PROGRESS // Admin is reviewing
+  ANSWERED    // Admin has replied
+  CLOSED      // Closed
 }

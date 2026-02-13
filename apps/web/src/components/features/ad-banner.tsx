@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { X, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,10 +32,10 @@ export function AdBanner({
   const [isVisible, setIsVisible] = useState(true);
   const [imageError, setImageError] = useState(false);
 
-  // Track impression when component mounts (in real implementation)
-  // useEffect(() => {
-  //   api.post(`/ads/${ad.id}/impression`).catch(() => {});
-  // }, [ad.id]);
+  // Track impression when component mounts
+  useEffect(() => {
+    api.post(`/ads/${ad.id}/impression`).catch(() => {});
+  }, [ad.id]);
 
   const handleClick = async () => {
     // Track click

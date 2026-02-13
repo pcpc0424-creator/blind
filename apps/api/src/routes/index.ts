@@ -17,6 +17,7 @@ import settingsRoutes from './settings.routes';
 import adminRoutes from './admin.routes';
 import uploadRoutes from './upload.routes';
 import reviewRoutes from './review.routes';
+import inquiryRoutes from './inquiry.routes';
 
 const router = Router();
 
@@ -40,6 +41,7 @@ router.use('/notifications', notificationRoutes);
 router.use('/tags', tagRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/reviews', reviewRoutes);
+router.use('/inquiries', inquiryRoutes);
 
 // API info
 router.get('/', (req, res) => {
@@ -64,6 +66,7 @@ router.get('/', (req, res) => {
         notifications: '/api/v1/notifications',
         tags: '/api/v1/tags',
         settings: '/api/v1/settings',
+        inquiries: '/api/v1/inquiries',
       },
     },
   });

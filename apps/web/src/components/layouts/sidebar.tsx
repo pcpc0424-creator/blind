@@ -26,6 +26,7 @@ import {
   Shield,
   Crown,
   Megaphone,
+  HelpCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -328,6 +329,18 @@ export function Sidebar({ className, onClose }: SidebarProps) {
               >
                 <MessageSquare className={cn('h-4 w-4', !isActive('/messages') && 'text-green-500')} />
                 Messages
+              </Link>
+              <Link
+                href="/inquiry"
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+                  isActive('/inquiry')
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                )}
+              >
+                <HelpCircle className={cn('h-4 w-4', !isActive('/inquiry') && 'text-teal-500')} />
+                Contact Us
               </Link>
             </nav>
           </div>
