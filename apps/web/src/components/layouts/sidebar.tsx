@@ -97,7 +97,7 @@ export function Sidebar({ className, onClose }: SidebarProps) {
     >
       {/* Mobile Header */}
       {onClose && (
-        <div className="flex items-center justify-between p-3 border-b md:hidden">
+        <div className="flex items-center justify-between p-3 border-b md:hidden pt-[calc(0.75rem+env(safe-area-inset-top))]">
           <Link href="/" className="flex items-center gap-2" onClick={onClose}>
             <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-purple-600">
               <Eye className="h-4 w-4 text-white" />
@@ -368,7 +368,7 @@ export function Sidebar({ className, onClose }: SidebarProps) {
       </div>
 
       {/* Footer */}
-      <div className="border-t p-3 bg-muted/30 space-y-2">
+      <div className="border-t p-3 bg-muted/30 space-y-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <Button variant="outline" className="w-full justify-start" asChild>
           <Link href="/communities">
             <Users className="mr-2 h-4 w-4 text-primary" />

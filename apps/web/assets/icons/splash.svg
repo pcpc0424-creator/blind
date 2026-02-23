@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2732 2732">
+  <!-- Background -->
+  <rect width="2732" height="2732" fill="#3b82f6"/>
+
+  <!-- Eye shape (outer) - centered -->
+  <ellipse cx="1366" cy="1200" rx="320" ry="200" fill="none" stroke="white" stroke-width="48" stroke-linecap="round"/>
+
+  <!-- Eye pupil -->
+  <circle cx="1366" cy="1200" r="100" fill="white"/>
+
+  <!-- Blind slash line -->
+  <line x1="1094" y1="1400" x2="1638" y2="1000" stroke="white" stroke-width="56" stroke-linecap="round"/>
+
+  <!-- Brand name -->
+  <text x="1366" y="1620" text-anchor="middle" font-family="Arial, sans-serif" font-size="180" font-weight="bold" fill="white">bulag</text>
+</svg>

@@ -31,9 +31,25 @@ import {
 import { useAuthStore } from '@/stores/auth.store';
 import { useLogout } from '@/hooks/use-auth';
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { formatRelativeTime } from '@/lib/utils';
 
 interface HeaderProps {
   onMenuClick?: () => void;
+}
+
+interface Notification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  data?: {
+    postId?: string;
+    commentId?: string;
+  };
+  isRead: boolean;
+  createdAt: string;
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
@@ -42,6 +58,41 @@ export function Header({ onMenuClick }: HeaderProps) {
   const logout = useLogout();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Fetch notifications
+  const { data: notificationsData } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const response = await api.get<{ notifications: Notification[]; total: number }>('/notifications');
+      return response.data;
+    },
+    enabled: isAuthenticated,
+  });
+
+  const notifications = notificationsData?.notifications || [];
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  // Mark notification as read
+  const markAsRead = useMutation({
+    mutationFn: async (id: string) => {
+      return api.patch(`/notifications/${id}/read`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  const handleNotificationClick = (notification: Notification) => {
+    if (!notification.isRead) {
+      markAsRead.mutate(notification.id);
+    }
+    if (notification.data?.postId) {
+      router.push(`/post/${notification.data.postId}`);
+    } else {
+      router.push('/notifications');
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +107,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-gradient-to-r from-background via-background to-primary/5 backdrop-blur-lg supports-[backdrop-filter]:bg-background/80">
+    <header className="sticky top-0 z-50 w-full border-b bg-gradient-to-r from-background via-background to-primary/5 backdrop-blur-lg supports-[backdrop-filter]:bg-background/80 pt-[env(safe-area-inset-top)]">
       <div className="container px-2 sm:px-4 md:px-6 flex h-14 sm:h-16 items-center gap-2 sm:gap-4">
         {/* Mobile menu button */}
         <Button
@@ -123,37 +174,43 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative rounded-full h-9 w-9">
                     <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-                    <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-red-500 text-[9px] sm:text-[10px] font-bold text-white">
-                      3
-                    </span>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-red-500 text-[9px] sm:text-[10px] font-bold text-white">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-80" align="end">
                   <DropdownMenuLabel className="flex items-center justify-between">
                     <span>Notifications</span>
-                    <Badge variant="secondary" className="text-xs">3 new</Badge>
+                    {unreadCount > 0 && (
+                      <Badge variant="secondary" className="text-xs">{unreadCount} new</Badge>
+                    )}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <div className="max-h-80 overflow-y-auto">
-                    <DropdownMenuItem className="flex flex-col items-start gap-1 p-3 cursor-pointer">
-                      <p className="text-sm font-medium">New comment received</p>
-                      <p className="text-xs text-muted-foreground">Someone commented on your post "Salary negotiation tips".</p>
-                      <p className="text-xs text-primary">5m ago</p>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex flex-col items-start gap-1 p-3 cursor-pointer">
-                      <p className="text-sm font-medium">Your post is trending 🔥</p>
-                      <p className="text-xs text-muted-foreground">Congratulations! Your post is gaining popularity.</p>
-                      <p className="text-xs text-primary">1h ago</p>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex flex-col items-start gap-1 p-3 cursor-pointer">
-                      <p className="text-sm font-medium">Someone liked your post</p>
-                      <p className="text-xs text-muted-foreground">10 people liked your post.</p>
-                      <p className="text-xs text-primary">3h ago</p>
-                    </DropdownMenuItem>
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-sm text-muted-foreground">
+                        No notifications
+                      </div>
+                    ) : (
+                      notifications.slice(0, 5).map((notification) => (
+                        <DropdownMenuItem
+                          key={notification.id}
+                          className={`flex flex-col items-start gap-1 p-3 cursor-pointer ${!notification.isRead ? 'bg-primary/5' : ''}`}
+                          onClick={() => handleNotificationClick(notification)}
+                        >
+                          <p className={`text-sm ${!notification.isRead ? 'font-medium' : ''}`}>{notification.title}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2">{notification.body}</p>
+                          <p className="text-xs text-primary">{formatRelativeTime(notification.createdAt)}</p>
+                        </DropdownMenuItem>
+                      ))
+                    )}
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="justify-center text-primary">
-                    View all notifications
+                  <DropdownMenuItem asChild className="justify-center text-primary cursor-pointer">
+                    <Link href="/notifications">View all notifications</Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

@@ -9,6 +9,18 @@ export const metadata: Metadata = {
   title: 'bulag - Anonymous Workplace Community',
   description: 'Anonymous community platform for professionals',
   keywords: ['workplace', 'anonymous', 'community', 'company', 'reviews'],
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: 'cover',
+  },
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/icon-192.png',
+  },
 };
 
 export default function RootLayout({

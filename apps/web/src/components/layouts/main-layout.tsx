@@ -40,7 +40,7 @@ export function MainLayout({ children, rightPanel }: MainLayoutProps) {
 
         {/* Main content */}
         <main className="flex-1 min-h-[calc(100vh-3.5rem)]">
-          <div className="container px-3 sm:px-4 md:px-6 py-4 md:py-6">
+          <div className="container px-3 sm:px-4 md:px-6 py-4 md:py-6 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             <div className="flex gap-4 md:gap-6">
               {/* Main feed area */}
               <div className="flex-1 min-w-0">{children}</div>

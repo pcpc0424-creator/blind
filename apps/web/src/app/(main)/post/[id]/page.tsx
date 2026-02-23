@@ -15,6 +15,9 @@ import {
   Trash2,
   ThumbsUp,
   ThumbsDown,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layouts/main-layout';
 import { Button } from '@/components/ui/button';
@@ -56,6 +59,16 @@ export default function PostDetailPage() {
       const response = await api.get<any>(`/posts/${id}`);
       return response.data;
     },
+  });
+
+  // Fetch related posts from the same community
+  const { data: relatedPostsData } = useQuery({
+    queryKey: ['related-posts', id, postData?.community?.id],
+    queryFn: async () => {
+      const response = await api.get<any>(`/posts?communityId=${postData.community.id}&limit=10`);
+      return response.data;
+    },
+    enabled: !!postData?.community?.id,
   });
 
   // Bookmark mutation
@@ -140,6 +153,16 @@ export default function PostDetailPage() {
   }
 
   const post = postData;
+
+  // Calculate prev/next posts and related posts
+  // API returns posts sorted by newest first, so:
+  // - Previous (older post) = next index in array
+  // - Next (newer post) = previous index in array
+  const relatedPosts = relatedPostsData || [];
+  const currentIndex = relatedPosts.findIndex((p: any) => p.id === id);
+  const prevPost = currentIndex >= 0 && currentIndex < relatedPosts.length - 1 ? relatedPosts[currentIndex + 1] : null;
+  const nextPost = currentIndex > 0 ? relatedPosts[currentIndex - 1] : null;
+  const otherPosts = relatedPosts.filter((p: any) => p.id !== id).slice(0, 5);
 
   return (
     <MainLayout>
@@ -379,6 +402,85 @@ export default function PostDetailPage() {
           }}
         />
       </div>
+
+      {/* Prev/Next Post Navigation */}
+      <div className="mt-6 flex justify-between gap-4">
+        {prevPost ? (
+          <Link href={`/post/${prevPost.id}`} className="flex-1">
+            <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
+              <ChevronLeft className="h-4 w-4 shrink-0" />
+              <div className="text-left min-w-0">
+                <p className="text-xs text-muted-foreground">Previous</p>
+                <p className="text-sm font-medium truncate">{prevPost.title}</p>
+              </div>
+            </Button>
+          </Link>
+        ) : (
+          <div className="flex-1" />
+        )}
+        {nextPost ? (
+          <Link href={`/post/${nextPost.id}`} className="flex-1">
+            <Button variant="outline" className="w-full justify-end gap-2 h-auto py-3">
+              <div className="text-right min-w-0">
+                <p className="text-xs text-muted-foreground">Next</p>
+                <p className="text-sm font-medium truncate">{nextPost.title}</p>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0" />
+            </Button>
+          </Link>
+        ) : (
+          <div className="flex-1" />
+        )}
+      </div>
+
+      {/* Related Posts from Same Community */}
+      {otherPosts.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">More from {post.community.name}</h3>
+              <Link
+                href={`/community/${post.community.slug}`}
+                className="text-sm text-primary hover:underline"
+              >
+                View all
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="divide-y">
+              {otherPosts.map((relatedPost: any) => (
+                <Link
+                  key={relatedPost.id}
+                  href={`/post/${relatedPost.id}`}
+                  className="flex items-center justify-between py-3 hover:bg-muted/50 -mx-4 px-4 transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{relatedPost.title}</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                      <span>{formatRelativeTime(relatedPost.createdAt)}</span>
+                      <span>·</span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-3 w-3" />
+                        {formatNumber(relatedPost.viewCount)}
+                      </span>
+                      <span>·</span>
+                      <span className="flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3" />
+                        {relatedPost.commentCount}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm ml-4">
+                    <ThumbsUp className="h-3 w-3" />
+                    <span>{relatedPost.voteCount}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Report Modal */}
       <ReportModal
