@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
 import { formatRelativeTime, cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface CommentSectionProps {
   postId: string;
@@ -20,6 +21,7 @@ interface CommentSectionProps {
 export function CommentSection({ postId, postAuthorId, onReportComment }: CommentSectionProps) {
   const { isAuthenticated, user } = useAuthStore();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
@@ -51,12 +53,16 @@ export function CommentSection({ postId, postAuthorId, onReportComment }: Commen
         isAnonymous: true,
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
       queryClient.invalidateQueries({ queryKey: ['post', postId] });
       setNewComment('');
       setReplyingTo(null);
       setReplyContent('');
+      toast({
+        title: variables.parentId ? 'Reply Posted' : 'Comment Posted',
+        description: variables.parentId ? 'Your reply has been posted.' : 'Your comment has been posted.',
+      });
     },
   });
 
@@ -65,8 +71,14 @@ export function CommentSection({ postId, postAuthorId, onReportComment }: Commen
     mutationFn: async ({ commentId, value }: { commentId: string; value: 1 | -1 | 0 }) => {
       return api.post(`/comments/${commentId}/vote`, { value });
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
+      const messages: Record<number, { title: string; description: string }> = {
+        1: { title: 'Upvoted', description: 'You upvoted this comment.' },
+        [-1]: { title: 'Downvoted', description: 'You downvoted this comment.' },
+        0: { title: 'Vote Removed', description: 'Your vote has been removed.' },
+      };
+      toast(messages[variables.value]);
     },
   });
 
@@ -77,6 +89,10 @@ export function CommentSection({ postId, postAuthorId, onReportComment }: Commen
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
+      toast({
+        title: 'Comment Updated',
+        description: 'Your comment has been updated.',
+      });
     },
   });
 
@@ -88,6 +104,10 @@ export function CommentSection({ postId, postAuthorId, onReportComment }: Commen
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
       queryClient.invalidateQueries({ queryKey: ['post', postId] });
+      toast({
+        title: 'Comment Deleted',
+        description: 'Your comment has been deleted.',
+      });
     },
   });
 

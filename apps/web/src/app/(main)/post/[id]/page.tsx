@@ -78,6 +78,10 @@ export default function PostDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['post', id] });
+      toast({
+        title: post?.isBookmarked ? 'Bookmark Removed' : 'Bookmarked',
+        description: post?.isBookmarked ? 'Post removed from bookmarks.' : 'Post added to bookmarks.',
+      });
     },
   });
 
@@ -107,8 +111,14 @@ export default function PostDetailPage() {
     mutationFn: async (value: 1 | -1 | 0) => {
       return api.post(`/posts/${id}/vote`, { value });
     },
-    onSuccess: () => {
+    onSuccess: (_, value) => {
       queryClient.invalidateQueries({ queryKey: ['post', id] });
+      const messages: Record<number, { title: string; description: string }> = {
+        1: { title: 'Upvoted', description: 'You upvoted this post.' },
+        [-1]: { title: 'Downvoted', description: 'You downvoted this post.' },
+        0: { title: 'Vote Removed', description: 'Your vote has been removed.' },
+      };
+      toast(messages[value]);
     },
   });
 
@@ -382,6 +392,10 @@ export default function PostDetailPage() {
                 size="sm"
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href);
+                  toast({
+                    title: 'Link Copied',
+                    description: 'Post link has been copied to clipboard.',
+                  });
                 }}
               >
                 <Share2 className="h-4 w-4" />

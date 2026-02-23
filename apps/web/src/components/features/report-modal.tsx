@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { api } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 const REPORT_REASONS = [
   { value: 'SPAM', label: 'Spam/Advertising' },
@@ -46,6 +47,7 @@ export function ReportModal({
 }: ReportModalProps) {
   const [reason, setReason] = useState<ReportReason | ''>('');
   const [description, setDescription] = useState('');
+  const { toast } = useToast();
 
   const reportMutation = useMutation({
     mutationFn: async () => {
@@ -60,6 +62,10 @@ export function ReportModal({
       onOpenChange(false);
       setReason('');
       setDescription('');
+      toast({
+        title: 'Report Submitted',
+        description: 'Thank you for your report. We will review it soon.',
+      });
       onSuccess?.();
     },
   });
