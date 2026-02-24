@@ -420,27 +420,27 @@ export default function PostDetailPage() {
       {/* Prev/Next Post Navigation */}
       <div className="mt-6 flex justify-between gap-4">
         {prevPost ? (
-          <Link href={`/post/${prevPost.id}`} className="flex-1">
-            <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
+          <Link href={`/post/${prevPost.id}`} className="flex-1 min-w-0">
+            <div className="w-full flex items-center gap-2 h-16 py-3 px-4 border border-input bg-background rounded-md hover:bg-accent hover:text-accent-foreground justify-start">
               <ChevronLeft className="h-4 w-4 shrink-0" />
-              <div className="text-left min-w-0">
+              <div className="text-left min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Previous</p>
                 <p className="text-sm font-medium truncate">{prevPost.title}</p>
               </div>
-            </Button>
+            </div>
           </Link>
         ) : (
           <div className="flex-1" />
         )}
         {nextPost ? (
-          <Link href={`/post/${nextPost.id}`} className="flex-1">
-            <Button variant="outline" className="w-full justify-end gap-2 h-auto py-3">
-              <div className="text-right min-w-0">
+          <Link href={`/post/${nextPost.id}`} className="flex-1 min-w-0">
+            <div className="w-full flex items-center gap-2 h-16 py-3 px-4 border border-input bg-background rounded-md hover:bg-accent hover:text-accent-foreground justify-end">
+              <div className="text-right min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Next</p>
                 <p className="text-sm font-medium truncate">{nextPost.title}</p>
               </div>
               <ChevronRight className="h-4 w-4 shrink-0" />
-            </Button>
+            </div>
           </Link>
         ) : (
           <div className="flex-1" />
