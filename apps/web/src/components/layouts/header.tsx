@@ -107,8 +107,8 @@ export function Header({ onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-gradient-to-r from-background via-background to-primary/5 backdrop-blur-lg supports-[backdrop-filter]:bg-background/80 pt-[env(safe-area-inset-top)]">
-      <div className="container px-2 sm:px-4 md:px-6 flex h-14 sm:h-16 items-center gap-2 sm:gap-4">
+    <header className="sticky top-0 z-50 w-screen max-w-[100vw] border-b bg-gradient-to-r from-background via-background to-primary/5 backdrop-blur-lg supports-[backdrop-filter]:bg-background/80 pt-[env(safe-area-inset-top)] overflow-x-hidden">
+      <div className="w-full max-w-[100vw] px-2 sm:px-4 md:px-6 flex h-14 sm:h-16 items-center gap-2 sm:gap-4 overflow-x-hidden md:container md:mx-auto">
         {/* Mobile menu button */}
         <Button
           variant="ghost"
@@ -133,13 +133,13 @@ export function Header({ onMenuClick }: HeaderProps) {
         </Link>
 
         {/* Search */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-xl mx-1 sm:mx-4">
-          <div className={`relative transition-all duration-200 ${isSearchFocused ? 'scale-[1.02]' : ''}`}>
+        <form onSubmit={handleSearch} className="flex-1 min-w-0 max-w-xl mx-1 sm:mx-4">
+          <div className={`relative transition-all duration-200 ${isSearchFocused ? 'md:scale-[1.02]' : ''}`}>
             <Search className={`absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors ${isSearchFocused ? 'text-primary' : 'text-muted-foreground'}`} />
             <Input
               type="search"
               placeholder="Search..."
-              className={`pl-8 sm:pl-10 pr-2 sm:pr-4 h-9 sm:h-10 text-sm rounded-full border-2 transition-all ${isSearchFocused ? 'border-primary bg-background shadow-lg shadow-primary/10' : 'border-muted bg-muted/50'}`}
+              className={`pl-8 sm:pl-10 pr-2 sm:pr-4 h-9 sm:h-10 text-base md:text-sm rounded-full border-2 transition-all ${isSearchFocused ? 'border-primary bg-background shadow-lg shadow-primary/10' : 'border-muted bg-muted/50'}`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
@@ -154,7 +154,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         </form>
 
         {/* Right side */}
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {isAuthenticated ? (
             <>
               {/* Write button */}

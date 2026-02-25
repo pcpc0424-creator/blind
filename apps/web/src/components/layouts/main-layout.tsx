@@ -14,12 +14,12 @@ export function MainLayout({ children, rightPanel }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background w-screen max-w-[100vw] overflow-x-hidden">
       <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
-      <div className="flex">
+      <div className="flex w-full max-w-[100vw] overflow-x-hidden">
         {/* Desktop sidebar */}
-        <Sidebar className="hidden md:flex sticky top-14" />
+        <Sidebar className="hidden md:flex sticky top-14 shrink-0" />
 
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
@@ -39,11 +39,11 @@ export function MainLayout({ children, rightPanel }: MainLayoutProps) {
         />
 
         {/* Main content */}
-        <main className="flex-1 min-h-[calc(100vh-3.5rem)]">
-          <div className="container px-3 sm:px-4 md:px-6 py-4 md:py-6 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-            <div className="flex gap-4 md:gap-6">
+        <main className="flex-1 min-w-0 min-h-[calc(100vh-3.5rem)] w-full max-w-full overflow-x-hidden">
+          <div className="w-full max-w-full px-3 sm:px-4 md:px-6 py-4 md:py-6 pb-[calc(1rem+env(safe-area-inset-bottom))] overflow-x-hidden md:container md:mx-auto">
+            <div className="flex gap-4 md:gap-6 w-full max-w-full">
               {/* Main feed area */}
-              <div className="flex-1 min-w-0">{children}</div>
+              <div className="flex-1 min-w-0 max-w-full overflow-hidden">{children}</div>
 
               {/* Right panel (desktop only) */}
               {rightPanel && (

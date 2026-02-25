@@ -183,7 +183,7 @@ export default function PostDetailPage() {
       </Button>
 
       {/* Post content */}
-      <Card>
+      <Card className="w-full max-w-full">
         <CardHeader>
           {/* Author info */}
           <div className="flex items-center justify-between">
@@ -254,10 +254,10 @@ export default function PostDetailPage() {
 
         <CardContent className="space-y-4">
           {/* Title */}
-          <h1 className="text-2xl font-bold">{post.title}</h1>
+          <h1 className="text-2xl font-bold break-words">{post.title}</h1>
 
           {/* Content */}
-          <div className="prose prose-sm max-w-none whitespace-pre-wrap">
+          <div className="prose prose-sm max-w-none whitespace-pre-wrap break-words overflow-hidden">
             {post.content}
           </div>
 

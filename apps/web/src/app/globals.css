@@ -69,12 +69,27 @@
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
+  }
+  html {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100vw;
   }
   body {
     @apply bg-background text-foreground;
     /* Prevent content from going under system bars */
     min-height: 100vh;
     min-height: -webkit-fill-available;
+    /* Prevent horizontal scroll on mobile */
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100vw;
+    position: relative;
+  }
+  /* Prevent any element from causing horizontal overflow */
+  #__next, main, article, section, div {
+    max-width: 100%;
   }
 }
 
