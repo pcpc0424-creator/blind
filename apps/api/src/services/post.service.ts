@@ -97,7 +97,7 @@ export const postService = {
               id: true,
               nickname: true,
               company: {
-                select: { id: true, name: true, slug: true },
+                select: { id: true, name: true, slug: true, industry: true },
               },
             },
           },
@@ -177,6 +177,7 @@ export const postService = {
             id: p.author.company.id,
             name: p.author.company.name,
             slug: p.author.company.slug,
+            industry: p.author.company.industry,
           } : null,
         },
         community: p.community,
@@ -253,7 +254,7 @@ export const postService = {
             id: true,
             nickname: true,
             company: {
-              select: { id: true, name: true, slug: true },
+              select: { id: true, name: true, slug: true, industry: true },
             },
           },
         },
@@ -344,6 +345,7 @@ export const postService = {
           id: post.author.company.id,
           name: post.author.company.name,
           slug: post.author.company.slug,
+          industry: post.author.company.industry,
         } : null,
       },
       community: post.community,

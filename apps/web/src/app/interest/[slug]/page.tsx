@@ -31,7 +31,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AdBanner, useAds } from '@/components/features/ad-banner';
+import { PromoBanner, usePromos } from '@/components/features/promo-banner';
 import { api } from '@/lib/api';
 import { formatRelativeTime } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
@@ -122,8 +122,8 @@ export default function InterestDetailPage() {
     enabled: !!data,
   });
 
-  // Fetch ads for interest pages (must be before early returns)
-  const { data: ads = [] } = useAds('INTEREST');
+  // Fetch promos for interest pages (must be before early returns)
+  const { data: promos = [] } = usePromos('INTEREST');
 
   if (isLoading) {
     return (
@@ -155,12 +155,12 @@ export default function InterestDetailPage() {
   const Icon = categoryIcons[category.slug] || Sparkles;
   const bgColor = category.color || '#8b5cf6';
 
-  // Insert ads every 4 posts in hot posts list
-  const renderHotPostsWithAds = () => {
+  // Insert promos every 4 posts in hot posts list
+  const renderHotPostsWithPromos = () => {
     if (!hotPosts || hotPosts.length === 0) return null;
 
     const result: React.ReactNode[] = [];
-    let adIndex = 0;
+    let promoIndex = 0;
 
     hotPosts.forEach((post, index) => {
       result.push(
@@ -203,14 +203,14 @@ export default function InterestDetailPage() {
         </Link>
       );
 
-      // Insert ad after every 4 posts
-      if ((index + 1) % 4 === 0 && ads[adIndex]) {
+      // Insert promo after every 4 posts
+      if ((index + 1) % 4 === 0 && promos[promoIndex]) {
         result.push(
-          <div key={`ad-${adIndex}`} className="my-1">
-            <AdBanner ad={ads[adIndex]} variant="inline" />
+          <div key={`promo-${promoIndex}`} className="my-1">
+            <PromoBanner promo={promos[promoIndex]} variant="inline" />
           </div>
         );
-        adIndex = (adIndex + 1) % ads.length;
+        promoIndex = (promoIndex + 1) % promos.length;
       }
     });
 
@@ -299,7 +299,7 @@ export default function InterestDetailPage() {
                   </CardContent>
                 </Card>
               ) : (
-                renderHotPostsWithAds()
+                renderHotPostsWithPromos()
               )}
             </TabsContent>
 

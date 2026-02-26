@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Users, Lock, PenSquare, Loader2, Film, ShieldAlert } from 'lucide-react';
 import { MainLayout } from '@/components/layouts/main-layout';
 import { PostCard } from '@/components/features/post-card';
-import { AdBanner, useAds, AdData } from '@/components/features/ad-banner';
+import { PromoBanner, usePromos, PromoData } from '@/components/features/promo-banner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -38,8 +38,8 @@ export default function CommunityPage() {
   // Check if error is access denied (403)
   const isAccessDenied = communityError && (communityError as any)?.response?.status === 403;
 
-  // Determine ad placement based on community type
-  const getAdPlacement = () => {
+  // Determine promo placement based on community type
+  const getPlacement = () => {
     if (!communityData) return 'ALL';
     switch (communityData.type) {
       case 'COMPANY':
@@ -53,8 +53,8 @@ export default function CommunityPage() {
     }
   };
 
-  // Fetch ads for this placement (must be before early returns)
-  const { data: ads = [] } = useAds(getAdPlacement());
+  // Fetch promos for this placement (must be before early returns)
+  const { data: promos = [] } = usePromos(getPlacement());
 
   // Fetch posts
   const { data: postsData, isLoading: postsLoading } = useQuery({
@@ -145,22 +145,22 @@ export default function CommunityPage() {
   const community = communityData;
   const posts = postsData?.data || [];
 
-  // Insert ads every 4 posts
-  const renderPostsWithAds = () => {
+  // Insert promos every 4 posts
+  const renderPostsWithPromos = () => {
     const result: React.ReactNode[] = [];
-    let adIndex = 0;
+    let promoIndex = 0;
 
     posts.forEach((post: any, index: number) => {
       result.push(<PostCard key={post.id} post={post} />);
 
-      // Insert ad after every 4 posts
-      if ((index + 1) % 4 === 0 && ads[adIndex]) {
+      // Insert promo after every 4 posts
+      if ((index + 1) % 4 === 0 && promos[promoIndex]) {
         result.push(
-          <div key={`ad-${adIndex}`} className="my-2">
-            <AdBanner ad={ads[adIndex]} variant="inline" />
+          <div key={`promo-${promoIndex}`} className="my-2">
+            <PromoBanner promo={promos[promoIndex]} variant="inline" />
           </div>
         );
-        adIndex = (adIndex + 1) % ads.length;
+        promoIndex = (promoIndex + 1) % promos.length;
       }
     });
 
@@ -302,7 +302,7 @@ export default function CommunityPage() {
             )}
           </div>
         ) : (
-          renderPostsWithAds()
+          renderPostsWithPromos()
         )}
       </div>
 

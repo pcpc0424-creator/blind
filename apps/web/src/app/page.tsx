@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { MainLayout } from '@/components/layouts/main-layout';
 import { PostCard } from '@/components/features/post-card';
 import { TrendingPosts } from '@/components/features/trending-posts';
-import { AdBanner, useAds } from '@/components/features/ad-banner';
+import { PromoBanner, usePromos } from '@/components/features/promo-banner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -82,25 +82,25 @@ export default function HomePage() {
   const trendingPosts = trendingData?.data || [];
   const communities = communitiesData?.data || [];
 
-  // Fetch ads for home page
-  const { data: ads = [] } = useAds('HOME');
+  // Fetch promos for home page
+  const { data: promos = [] } = usePromos('HOME');
 
-  // Insert ads every 4 posts
-  const renderPostsWithAds = () => {
+  // Insert promos every 4 posts
+  const renderPostsWithPromos = () => {
     const result: React.ReactNode[] = [];
-    let adIndex = 0;
+    let promoIndex = 0;
 
     posts.forEach((post: any, index: number) => {
       result.push(<PostCard key={post.id} post={post} />);
 
-      // Insert ad after every 4 posts
-      if ((index + 1) % 4 === 0 && ads[adIndex]) {
+      // Insert promo after every 4 posts
+      if ((index + 1) % 4 === 0 && promos[promoIndex]) {
         result.push(
-          <div key={`ad-${adIndex}`} className="my-1">
-            <AdBanner ad={ads[adIndex]} variant="inline" />
+          <div key={`promo-${promoIndex}`} className="my-1">
+            <PromoBanner promo={promos[promoIndex]} variant="inline" />
           </div>
         );
-        adIndex = (adIndex + 1) % ads.length;
+        promoIndex = (promoIndex + 1) % promos.length;
       }
     });
 
@@ -311,7 +311,7 @@ export default function HomePage() {
             </CardContent>
           </Card>
         ) : (
-          renderPostsWithAds()
+          renderPostsWithPromos()
         )}
       </div>
 

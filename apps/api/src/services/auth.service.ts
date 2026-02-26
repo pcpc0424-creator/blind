@@ -465,11 +465,16 @@ export const authService = {
   },
 
   /**
-   * Login with nickname and password
+   * Login with email and password
    */
   async login(input: LoginInput, userAgent?: string, ipAddress?: string) {
-    const user = await prisma.user.findUnique({
-      where: { nickname: input.nickname },
+    const email = input.email.toLowerCase();
+
+    // Find users with email hash to check credentials
+    const users = await prisma.user.findMany({
+      where: {
+        emailHash: { not: null },
+      },
       include: {
         company: {
           select: {
@@ -483,8 +488,20 @@ export const authService = {
       },
     });
 
+    // Find matching user by recomputing hash
+    let user = null;
+    for (const u of users) {
+      if (u.emailSalt) {
+        const expectedHash = hashEmail(email, u.emailSalt);
+        if (expectedHash === u.emailHash) {
+          user = u;
+          break;
+        }
+      }
+    }
+
     if (!user) {
-      throw new AppError(401, ERROR_CODES.INVALID_CREDENTIALS, 'Invalid nickname or password.');
+      throw new AppError(401, ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email or password.');
     }
 
     if (user.status !== 'ACTIVE') {
@@ -493,7 +510,7 @@ export const authService = {
 
     const isPasswordValid = await bcrypt.compare(input.password, user.passwordHash);
     if (!isPasswordValid) {
-      throw new AppError(401, ERROR_CODES.INVALID_CREDENTIALS, 'Invalid nickname or password.');
+      throw new AppError(401, ERROR_CODES.INVALID_CREDENTIALS, 'Invalid email or password.');
     }
 
     // Create session

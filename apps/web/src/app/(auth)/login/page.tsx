@@ -49,21 +49,22 @@ export default function LoginPage() {
           </Link>
           <CardTitle className="text-xl">Sign In</CardTitle>
           <CardDescription>
-            Enter your nickname and password
+            Enter your email and password
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nickname">Nickname</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="nickname"
-                placeholder="e.g. swift_fox_8472"
-                {...register('nickname')}
+                id="email"
+                type="email"
+                placeholder="e.g. user@company.com"
+                {...register('email')}
               />
-              {errors.nickname && (
+              {errors.email && (
                 <p className="text-sm text-destructive">
-                  {errors.nickname.message}
+                  {errors.email.message}
                 </p>
               )}
             </div>

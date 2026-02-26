@@ -52,3 +52,25 @@ export function formatNumber(num: number): string {
   }
   return num.toString();
 }
+
+/**
+ * Mask company name for privacy (e.g., "Samsung Electronics" -> "SAM*** (IT)")
+ */
+export function maskCompanyName(
+  name: string,
+  industry?: string | null,
+  visibleChars: number = 3
+): string {
+  if (!name) return 'Anonymous';
+
+  // Get first N characters and uppercase them
+  const visible = name.slice(0, visibleChars).toUpperCase();
+  const masked = `${visible}***`;
+
+  // Add industry if available
+  if (industry) {
+    return `${masked} (${industry})`;
+  }
+
+  return masked;
+}

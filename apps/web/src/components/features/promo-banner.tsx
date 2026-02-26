@@ -6,7 +6,7 @@ import { X, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 
-export interface AdData {
+export interface PromoData {
   id: string;
   title: string;
   imageUrl: string;
@@ -14,33 +14,33 @@ export interface AdData {
   placement: string;
 }
 
-interface AdBannerProps {
-  ad: AdData;
+interface PromoBannerProps {
+  promo: PromoData;
   className?: string;
   variant?: 'card' | 'inline' | 'full';
   showCloseButton?: boolean;
   onClose?: () => void;
 }
 
-export function AdBanner({
-  ad,
+export function PromoBanner({
+  promo,
   className,
   variant = 'card',
   showCloseButton = false,
   onClose,
-}: AdBannerProps) {
+}: PromoBannerProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [imageError, setImageError] = useState(false);
 
   // Track impression when component mounts
   useEffect(() => {
-    api.post(`/banners/${ad.id}/impression`).catch(() => {});
-  }, [ad.id]);
+    api.post(`/banners/${promo.id}/impression`).catch(() => {});
+  }, [promo.id]);
 
   const handleClick = async () => {
     // Track click
     try {
-      await api.post(`/banners/${ad.id}/click`);
+      await api.post(`/banners/${promo.id}/click`);
     } catch (error) {
       // Ignore errors
     }
@@ -65,10 +65,10 @@ export function AdBanner({
         className
       )}
     >
-      {/* Ad Label */}
+      {/* Sponsor Label */}
       <div className="absolute top-2 left-2 z-10">
         <span className="text-[10px] bg-black/50 text-white px-1.5 py-0.5 rounded">
-          AD
+          Sponsored
         </span>
       </div>
 
@@ -88,8 +88,8 @@ export function AdBanner({
 
       {/* Banner Image */}
       <img
-        src={ad.imageUrl}
-        alt={ad.title}
+        src={promo.imageUrl}
+        alt={promo.title}
         className={cn(
           'w-full object-cover',
           variant === 'card' && 'h-32 sm:h-40',
@@ -100,7 +100,7 @@ export function AdBanner({
       />
 
       {/* External Link Indicator */}
-      {ad.linkUrl && (
+      {promo.linkUrl && (
         <div className="absolute bottom-2 right-2">
           <ExternalLink className="h-4 w-4 text-white drop-shadow-md" />
         </div>
@@ -108,10 +108,10 @@ export function AdBanner({
     </div>
   );
 
-  if (ad.linkUrl) {
+  if (promo.linkUrl) {
     return (
       <a
-        href={ad.linkUrl}
+        href={promo.linkUrl}
         target="_blank"
         rel="noopener noreferrer sponsored"
         onClick={handleClick}
@@ -125,24 +125,24 @@ export function AdBanner({
   return content;
 }
 
-// Component to insert ads into a list every N items
-interface AdInsertedListProps<T> {
+// Component to insert promos into a list every N items
+interface PromoInsertedListProps<T> {
   items: T[];
-  ads: AdData[];
+  promos: PromoData[];
   insertEvery?: number;
   renderItem: (item: T, index: number) => React.ReactNode;
-  adVariant?: 'card' | 'inline' | 'full';
+  promoVariant?: 'card' | 'inline' | 'full';
 }
 
-export function AdInsertedList<T>({
+export function PromoInsertedList<T>({
   items,
-  ads,
+  promos,
   insertEvery = 4,
   renderItem,
-  adVariant = 'card',
-}: AdInsertedListProps<T>) {
+  promoVariant = 'card',
+}: PromoInsertedListProps<T>) {
   const result: React.ReactNode[] = [];
-  let adIndex = 0;
+  let promoIndex = 0;
 
   items.forEach((item, index) => {
     // Add the item
@@ -152,28 +152,28 @@ export function AdInsertedList<T>({
       </div>
     );
 
-    // Insert ad after every N items (if we have ads available)
-    if ((index + 1) % insertEvery === 0 && ads[adIndex]) {
+    // Insert promo after every N items (if we have promos available)
+    if ((index + 1) % insertEvery === 0 && promos[promoIndex]) {
       result.push(
-        <div key={`ad-${adIndex}`} className="my-4">
-          <AdBanner ad={ads[adIndex]} variant={adVariant} />
+        <div key={`promo-${promoIndex}`} className="my-4">
+          <PromoBanner promo={promos[promoIndex]} variant={promoVariant} />
         </div>
       );
-      adIndex = (adIndex + 1) % ads.length; // Cycle through ads
+      promoIndex = (promoIndex + 1) % promos.length; // Cycle through promos
     }
   });
 
   return <>{result}</>;
 }
 
-// Hook to fetch ads for a specific placement
+// Hook to fetch promos for a specific placement
 import { useQuery } from '@tanstack/react-query';
 
-export function useAds(placement: string) {
+export function usePromos(placement: string) {
   return useQuery({
-    queryKey: ['ads', placement],
+    queryKey: ['promos', placement],
     queryFn: async () => {
-      const response = await api.get<AdData[]>(`/banners?placement=${placement}`);
+      const response = await api.get<PromoData[]>(`/banners?placement=${placement}`);
       return response.data || [];
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes

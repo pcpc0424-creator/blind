@@ -61,10 +61,10 @@ export const registerGeneralSchema = z.object({
 
 // Login schema
 export const loginSchema = z.object({
-  nickname: z
+  email: z
     .string()
-    .min(1, 'Please enter your nickname or username')
-    .max(50, 'Nickname cannot exceed 50 characters'),
+    .email('Please enter a valid email address')
+    .transform((email) => email.toLowerCase().trim()),
   password: z.string().min(1, 'Please enter your password'),
 });
 

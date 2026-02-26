@@ -5,7 +5,7 @@ import { MessageSquare, Eye, Image as ImageIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { cn, formatRelativeTime, formatNumber } from '@/lib/utils';
+import { cn, formatRelativeTime, formatNumber, maskCompanyName } from '@/lib/utils';
 
 interface PostCardProps {
   post: {
@@ -25,6 +25,7 @@ interface PostCardProps {
         id: string;
         name: string;
         slug: string;
+        industry?: string | null;
       } | null;
     };
     community: {
@@ -123,7 +124,7 @@ export function PostCard({ post }: PostCardProps) {
                   <span className="text-[10px] sm:text-xs text-muted-foreground">
                     {post.author.isAnonymous
                       ? post.author.company
-                        ? `${post.author.company.name} - Anonymous`
+                        ? maskCompanyName(post.author.company.name, post.author.company.industry)
                         : 'Anonymous'
                       : post.author.nickname}
                   </span>

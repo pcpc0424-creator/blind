@@ -93,6 +93,7 @@ export default function AdsManagementPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAd, setEditingAd] = useState<Advertisement | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState<AdFormData>({
     title: '',
     imageUrl: '',
@@ -218,6 +219,58 @@ export default function AdsManagementPage() {
   const getCTR = (impressions: number, clicks: number) => {
     if (impressions === 0) return '0%';
     return ((clicks / impressions) * 100).toFixed(2) + '%';
+  };
+
+  // Handle image upload
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid file type',
+        description: 'Only JPEG, PNG, GIF, WebP images are allowed.',
+      });
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: 'destructive',
+        title: 'File too large',
+        description: 'Maximum file size is 5MB.',
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+
+      const response = await api.upload('/upload/single', formDataUpload);
+      const data = response.data as { url: string };
+
+      setFormData(prev => ({ ...prev, imageUrl: data.url }));
+      toast({
+        title: 'Image uploaded',
+        description: 'Image has been uploaded successfully.',
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Upload failed',
+        description: error.message || 'Failed to upload image.',
+      });
+    } finally {
+      setIsUploading(false);
+      // Reset input
+      e.target.value = '';
+    }
   };
 
   if (isLoading) {
@@ -437,14 +490,36 @@ export default function AdsManagementPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="imageUrl">Banner Image URL</Label>
-              <Input
-                id="imageUrl"
-                value={formData.imageUrl}
-                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                placeholder="https://..."
-                required
-              />
+              <Label>Banner Image</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="imageUrl"
+                  value={formData.imageUrl}
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  placeholder="https://... or upload image"
+                  required
+                  className="flex-1"
+                />
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleImageUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={isUploading}
+                  />
+                  <Button type="button" variant="outline" disabled={isUploading}>
+                    {isUploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Upload image to auto-generate safe URL (recommended)
+              </p>
               {formData.imageUrl && (
                 <div className="mt-2 border rounded-lg overflow-hidden">
                   <img

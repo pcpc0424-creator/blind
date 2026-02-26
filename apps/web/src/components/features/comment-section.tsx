@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
-import { formatRelativeTime, cn } from '@/lib/utils';
+import { formatRelativeTime, cn, maskCompanyName } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 interface CommentSectionProps {
@@ -282,8 +282,8 @@ function CommentItem({
             <span className="text-sm font-medium">
               {comment.author.isAnonymous
                 ? comment.author.company
-                  ? `${comment.author.company.name} - ${comment.author.nickname}`
-                  : comment.author.nickname
+                  ? maskCompanyName(comment.author.company.name, comment.author.company.industry)
+                  : 'Anonymous'
                 : comment.author.nickname}
             </span>
             {isPostAuthor && (

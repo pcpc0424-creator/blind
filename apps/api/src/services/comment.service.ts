@@ -55,7 +55,7 @@ export const commentService = {
             select: {
               id: true,
               nickname: true,
-              company: { select: { id: true, name: true, slug: true } },
+              company: { select: { id: true, name: true, slug: true, industry: true } },
             },
           },
           replies: {
@@ -65,7 +65,7 @@ export const commentService = {
                 select: {
                   id: true,
                   nickname: true,
-                  company: { select: { id: true, name: true, slug: true } },
+                  company: { select: { id: true, name: true, slug: true, industry: true } },
                 },
               },
             },
@@ -121,6 +121,7 @@ export const commentService = {
           id: c.author.company.id,
           name: c.author.company.name,
           slug: c.author.company.slug,
+          industry: c.author.company.industry,
         } : null,
       },
       parentId: c.parentId,
@@ -223,7 +224,7 @@ export const commentService = {
             select: {
               id: true,
               nickname: true,
-              company: { select: { id: true, name: true, slug: true } },
+              company: { select: { id: true, name: true, slug: true, industry: true } },
             },
           },
         },
@@ -268,6 +269,7 @@ export const commentService = {
           id: comment.author.company.id,
           name: comment.author.company.name,
           slug: comment.author.company.slug,
+          industry: comment.author.company.industry,
         } : null,
       },
       parentId: comment.parentId,
