@@ -1,7 +1,8 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Building2, Shield, Sparkles, MessageSquare, Loader2 } from 'lucide-react';
 import { MainLayout } from '@/components/layouts/main-layout';
@@ -40,6 +41,14 @@ const targetTypeInfo: Record<TargetType, { label: string; icon: any; description
 };
 
 export default function RequestCommunityPage() {
+  return (
+    <Suspense fallback={<MainLayout><div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></MainLayout>}>
+      <RequestCommunityContent />
+    </Suspense>
+  );
+}
+
+function RequestCommunityContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();

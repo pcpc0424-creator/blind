@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // basePath removed - using dedicated domain bulagph.com
   reactStrictMode: true,
   transpilePackages: ['@blind/shared'],
   images: {

@@ -1,6 +1,7 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { Suspense, useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -83,6 +84,14 @@ function parseVideoUrl(url: string): { type: 'youtube' | 'vimeo' | null; id: str
 }
 
 export default function WritePage() {
+  return (
+    <Suspense fallback={<MainLayout><div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></MainLayout>}>
+      <WritePageContent />
+    </Suspense>
+  );
+}
+
+function WritePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, user } = useAuthStore();

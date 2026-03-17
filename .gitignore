@@ -42,3 +42,9 @@ packages/database/prisma/*.db-journal
 
 # Misc
 *.tsbuildinfo
+node_modules/
+.next/
+.env
+.env.*
+dist/
+build/

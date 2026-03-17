@@ -109,9 +109,14 @@ export function PromoBanner({
   );
 
   if (promo.linkUrl) {
+    // Ensure URL has a protocol, default to https:// if missing
+    const normalizedUrl = promo.linkUrl.match(/^https?:\/\//)
+      ? promo.linkUrl
+      : `https://${promo.linkUrl}`;
+
     return (
       <a
-        href={promo.linkUrl}
+        href={normalizedUrl}
         target="_blank"
         rel="noopener noreferrer sponsored"
         onClick={handleClick}

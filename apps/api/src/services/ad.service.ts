@@ -92,10 +92,17 @@ export const adService = {
     placement: AdPlacement;
     isActive?: boolean;
     priority?: number;
-    startDate?: Date;
-    endDate?: Date;
+    startDate?: Date | string;
+    endDate?: Date | string;
   }) {
-    return prisma.advertisement.create({ data });
+    // Convert empty strings to undefined and string dates to Date objects
+    const cleanedData = {
+      ...data,
+      linkUrl: data.linkUrl || undefined,
+      startDate: data.startDate ? new Date(data.startDate) : undefined,
+      endDate: data.endDate ? new Date(data.endDate) : undefined,
+    };
+    return prisma.advertisement.create({ data: cleanedData });
   },
 
   // Admin: Update ad
@@ -106,12 +113,23 @@ export const adService = {
     placement: AdPlacement;
     isActive: boolean;
     priority: number;
-    startDate: Date;
-    endDate: Date;
+    startDate: Date | string;
+    endDate: Date | string;
   }>) {
+    // Convert empty strings to null and string dates to Date objects
+    const cleanedData: any = { ...data };
+    if ('linkUrl' in data) {
+      cleanedData.linkUrl = data.linkUrl || null;
+    }
+    if ('startDate' in data) {
+      cleanedData.startDate = data.startDate ? new Date(data.startDate) : null;
+    }
+    if ('endDate' in data) {
+      cleanedData.endDate = data.endDate ? new Date(data.endDate) : null;
+    }
     return prisma.advertisement.update({
       where: { id },
-      data,
+      data: cleanedData,
     });
   },
 
